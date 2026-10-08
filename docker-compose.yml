@@ -32,13 +32,15 @@ services:
       DB_PORT: 5432
       DB_USER: wiki
       DB_NAME: wiki
+      VIRTUAL_HOST: wiki.local, localhost
+      VIRTUAL_PORT: 3000
     secrets:
       - db_password
     networks:
       - db
       - pub
     ports:
-      - "3000:3000"
+      - 3000:3000
     healthcheck:
       interval: 30s
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
@@ -60,3 +62,4 @@ volumes:
 networks:
   db:
   pub:
+    external: true
