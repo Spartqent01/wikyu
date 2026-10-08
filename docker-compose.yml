@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
     secrets:
       - db_password
+    networks:
+      - db
     volumes:
       - db-data:/var/lib/postgresql
     healthcheck:
@@ -32,6 +34,9 @@ services:
       DB_NAME: wiki
     secrets:
       - db_password
+    networks:
+      - db
+      - pub
     ports:
       - "3000:3000"
     healthcheck:
@@ -52,3 +57,6 @@ secrets:
 
 volumes:
   db-data:
+networks:
+  db:
+  pub:
