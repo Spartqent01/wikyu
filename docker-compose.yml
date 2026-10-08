@@ -1,0 +1,54 @@
+services:
+
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: wiki
+      POSTGRES_DB: wiki
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "wiki", "-d", "wiki"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  wiki:
+    build:
+      context: ./wiki
+      dockerfile: ../Dockerfile
+    image: headwind565/dumbsumb:1
+    depends_on:
+      db:
+        condition: service_healthy   
+    environment:
+      DB_HOST: db         
+      DB_PORT: 5432
+      DB_USER: wiki
+      DB_NAME: wiki
+    secrets:
+      - db_password
+    ports:
+      - "3000:3000"
+    healthcheck:
+      interval: 30s
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      timeout: 5s
+      retries: 3
+      start_period: 60s  
+    restart: unless-stopped
+    command:
+      - sh
+      - -c
+      - export DB_PASS="$$(cat /run/secrets/db_password)" && exec node --no-experimental-webstorage backend
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+
+volumes:
+  db-data:
