@@ -13,24 +13,6 @@ Wiki.js v3 conteneurisé, déployé en HTTPS sur DigitalOcean avec Terraform.
        └─────────────────────────────────────────────────►└─────────────────────────────┘
 ```
 
-## Structure
-
-```
-.
-├── Dockerfile               # image Wiki.js
-├── docker-compose.yml       # stack de production
-├── .gitignore
-└── terraform/
-    ├── versions.tf          # providers : digitalocean, random
-    ├── variables.tf         # paramètres
-    ├── main.tf              # projet, clé SSH, droplet, firewall, DNS, secrets
-    ├── outputs.tf           # IP, URLs, commande SSH, secrets générés
-    ├── cloud-init.yaml.tftpl  # configuration de la VM au premier démarrage
-    └── terraform.tfvars.example
-```
-
-Branches : `master` contient la conteneurisation, `deploy` y ajoute le déploiement Terraform.
-
 ## 1. L'image Docker
 
 Le `Dockerfile` est en deux étapes :
@@ -38,7 +20,7 @@ Le `Dockerfile` est en deux étapes :
 | Étape | Image | Rôle |
 |---|---|---|
 | build | `node:26` | Compile `frontend` et `blocks`, installe les dépendances de prod de `backend` |
-| run | `node:alpine` | Ne garde que le résultat du build. Tourne avec l'utilisateur `node` (non-root), port 3000 |
+| run | `node:26` | Ne garde que le résultat du build. Tourne avec l'utilisateur `node` (non-root), port 3000 |
 
 L'image finale est légère et ne contient ni les sources du front ni les outils de build.
 

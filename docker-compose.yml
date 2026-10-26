@@ -2,7 +2,7 @@ services:
 
   # ---------- Reverse proxy ----------
   nginx-proxy:
-    image: nginxproxy/nginx-proxy:alpine   # épingle une version précise en prod
+    image: nginxproxy/nginx-proxy:1.11.6-alpine
     container_name: nginx-proxy
     ports:
       - "80:80"     # nécessaire pour le challenge HTTP-01 de Let's Encrypt
@@ -18,7 +18,7 @@ services:
 
   # ---------- Certificats Let's Encrypt ----------
   acme-companion:
-    image: nginxproxy/acme-companion:latest   # épingle une version précise en prod
+    image: nginxproxy/acme-companion:2.8.2
     container_name: acme-companion
     depends_on:
       - nginx-proxy
@@ -105,4 +105,4 @@ volumes:
 networks:
   db:
     internal: true  
-  pub:               
+  pub:  
