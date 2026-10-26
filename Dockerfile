@@ -1,4 +1,4 @@
-FROM node:26 AS build
+FROM node:26-alpine AS build
 
 WORKDIR /wiki
 
@@ -11,7 +11,7 @@ RUN cd blocks && npm ci && npm run build
 RUN cd backend && npm ci --omit=dev
 
 
-FROM node:alpine
+FROM node:26-alpine
 
 WORKDIR /wiki
 ENV NODE_ENV=production
