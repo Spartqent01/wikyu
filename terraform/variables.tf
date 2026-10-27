@@ -1,4 +1,3 @@
-# ---------- Projet DigitalOcean ----------
 variable "project_name" {
   description = "Nom du projet DigitalOcean"
   type        = string
@@ -11,7 +10,6 @@ variable "project_create" {
   default     = true
 }
 
-# ---------- Droplet ----------
 variable "name" {
   description = "Nom du droplet (préfixe des autres ressources)"
   type        = string
@@ -30,7 +28,6 @@ variable "size" {
   default     = "s-1vcpu-1gb-amd"
 }
 
-# ---------- SSH ----------
 variable "ssh_public_key_path" {
   description = "Clé publique SSH de l'utilisateur ops"
   type        = string
@@ -48,7 +45,6 @@ variable "ssh_allowed_cidrs" {
   type        = list(string)
 }
 
-# ---------- Wiki ----------
 variable "wiki_domain" {
   description = "Domaine du wiki (ex : wiki.example.com)"
   type        = string
@@ -70,7 +66,6 @@ variable "registry_token" {
   sensitive   = true
 }
 
-# ---------- DNS (optionnel) ----------
 variable "dns_zone" {
   description = "Zone gérée chez DO (ex : example.com) pour créer l'enregistrement A. null = DNS fait à la main."
   type        = string

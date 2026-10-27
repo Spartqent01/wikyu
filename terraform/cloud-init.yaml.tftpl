@@ -1,5 +1,4 @@
 #cloud-config
-# Rendu par Terraform (templatefile), passé en user_data au droplet
 
 users:
   - name: ops
@@ -39,7 +38,6 @@ runcmd:
   - ufw allow 80/tcp
   - ufw allow 443/tcp
   - ufw --force enable
-  # Seul root peut parcourir le dossier (le fichier reste lisible par les conteneurs)
   - chmod 700 /opt/deploy/secrets
   - docker compose -f /opt/deploy/docker-compose.yml up -d
 

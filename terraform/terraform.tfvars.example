@@ -1,17 +1,5 @@
-# Copie ce fichier en terraform.tfvars et adapte
-
-ssh_allowed_cidrs = ["203.0.113.10/32"] # ton IP : curl ifconfig.me
-# existing_ssh_key_name = "ma-cle"      # si la clé est déjà enregistrée chez DO
+ssh_allowed_cidrs = ["203.0.113.10/32"]
 
 wiki_domain       = "wiki.example.com"
 letsencrypt_email = "toi@example.com"
 registry_username = "headwind565"
-# registry_token : export TF_VAR_registry_token="dckr_pat_..."
-
-# dns_zone = "example.com" # si le domaine est géré chez DigitalOcean
-
-# Valeurs par défaut modifiables :
-# project_name   = "wikyu"
-# project_create = true   # false si le projet existe déjà
-# region         = "fra1"
-# size           = "s-1vcpu-1gb-amd"

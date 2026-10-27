@@ -70,7 +70,7 @@ terraform output -raw db_password   # mot de passe PostgreSQL
 terraform destroy                   # tout supprimer
 ```
 
-⚠️ Modifier le compose ou les variables **recrée la VM** et efface les données (voir le bloc `lifecycle` dans `main.tf`).
+⚠️ Modifier le compose ou les variables **recrée la VM** et efface les données (pour l’éviter, ajoute `lifecycle { ignore_changes = [user_data] }` au droplet dans `main.tf`).
 
 ## Dépannage
 

@@ -7,7 +7,6 @@ locals {
     ? data.digitalocean_ssh_key.existing[0].fingerprint
   : digitalocean_ssh_key.this[0].fingerprint)
 
-  # Identifiants Docker Hub -> /root/.docker/config.json
   docker_config = jsonencode({
     auths = {
       "https://index.docker.io/v1/" = {
@@ -17,13 +16,11 @@ locals {
   })
 }
 
-# ---------- Mot de passe PostgreSQL ----------
 resource "random_password" "db" {
   length  = 32
-  special = false # évite les soucis d'échappement
+  special = false
 }
 
-# ---------- Projet (créé ou existant) ----------
 resource "digitalocean_project" "this" {
   count       = var.project_create ? 1 : 0
   name        = var.project_name
@@ -41,7 +38,6 @@ resource "digitalocean_project_resources" "this" {
   resources = [digitalocean_droplet.this.urn]
 }
 
-# ---------- Clé SSH (existante ou créée) ----------
 data "digitalocean_ssh_key" "existing" {
   count = var.existing_ssh_key_name != null ? 1 : 0
   name  = var.existing_ssh_key_name
@@ -53,7 +49,6 @@ resource "digitalocean_ssh_key" "this" {
   public_key = local.ssh_public_key
 }
 
-# ---------- Droplet ----------
 resource "digitalocean_droplet" "this" {
   name       = var.name
   region     = var.region
@@ -71,15 +66,8 @@ resource "digitalocean_droplet" "this" {
     db_password       = random_password.db.result
     docker_config     = local.docker_config
   })
-
-  # Toute modif du user_data recrée le droplet (données perdues).
-  # Pour l'éviter, décommente :
-  # lifecycle {
-  #   ignore_changes = [user_data]
-  # }
 }
 
-# ---------- DNS (optionnel, domaine géré chez DigitalOcean) ----------
 resource "digitalocean_record" "wiki" {
   count  = var.dns_zone != null ? 1 : 0
   domain = var.dns_zone
@@ -89,7 +77,6 @@ resource "digitalocean_record" "wiki" {
   ttl    = 300
 }
 
-# ---------- Firewall Cloud ----------
 resource "digitalocean_firewall" "this" {
   name        = "${var.name}-fw"
   droplet_ids = [digitalocean_droplet.this.id]
@@ -114,7 +101,6 @@ resource "digitalocean_firewall" "this" {
     source_addresses = ["0.0.0.0/0", "::/0"]
   }
 
-  # Sortant : tout autorisé
   dynamic "outbound_rule" {
     for_each = ["tcp", "udp"]
     content {

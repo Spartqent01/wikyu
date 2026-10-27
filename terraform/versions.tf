@@ -13,6 +13,4 @@ terraform {
   }
 }
 
-# Le token est lu depuis la variable d'environnement DIGITALOCEAN_TOKEN
-# (export DIGITALOCEAN_TOKEN="dop_v1_...") -> jamais de secret dans le code.
 provider "digitalocean" {}
