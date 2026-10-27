@@ -1,55 +1,46 @@
 services:
 
-  # ---------- Reverse proxy ----------
   nginx-proxy:
     image: nginxproxy/nginx-proxy:1.11.6-alpine
     container_name: nginx-proxy
     ports:
-      - "80:80"     # nécessaire pour le challenge HTTP-01 de Let's Encrypt
+      - "80:80"   # requis pour le challenge Let's Encrypt
       - "443:443"
     volumes:
       - certs:/etc/nginx/certs
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
-    networks:
-      - pub
+    networks: [pub]
     restart: unless-stopped
 
-  # ---------- Certificats Let's Encrypt ----------
   acme-companion:
     image: nginxproxy/acme-companion:2.8.2
     container_name: acme-companion
-    depends_on:
-      - nginx-proxy
+    depends_on: [nginx-proxy]
     environment:
       NGINX_PROXY_CONTAINER: nginx-proxy
       DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
-      # Pour tester sans risquer le rate limit Let's Encrypt (certificat non reconnu) :
-      # ACME_CA_URI: https://acme-staging-v02.api.letsencrypt.org/directory
+      # Tests sans rate limit : ACME_CA_URI: https://acme-staging-v02.api.letsencrypt.org/directory
     volumes:
       - certs:/etc/nginx/certs
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - pub
+    networks: [pub]
     restart: unless-stopped
 
-  # ---------- Base de données ----------
   db:
     image: postgres:18
     environment:
       POSTGRES_USER: wiki
       POSTGRES_DB: wiki
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-    secrets:
-      - db_password
-    networks:
-      - db
+    secrets: [db_password]
     volumes:
       - db-data:/var/lib/postgresql
+    networks: [db]
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "wiki", "-d", "wiki"]
       interval: 10s
@@ -57,9 +48,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # ---------- Application ----------
   wiki:
-    # Pas de "build:" ici : la VM n'a pas le code source, l'image est tirée du registry
     image: headwind565/dumbsumb:1
     depends_on:
       db:
@@ -69,31 +58,23 @@ services:
       DB_PORT: 5432
       DB_USER: wiki
       DB_NAME: wiki
-      # Lus par nginx-proxy / acme-companion
-      VIRTUAL_HOST: ${WIKI_DOMAIN}
+      VIRTUAL_HOST: ${WIKI_DOMAIN}       # lu par nginx-proxy
       VIRTUAL_PORT: 3000
-      LETSENCRYPT_HOST: ${WIKI_DOMAIN}
-    secrets:
-      - db_password
-    networks:
-      - db
-      - pub
-    # Plus de "ports:" : le wiki n'est joignable que via le proxy en HTTPS
+      LETSENCRYPT_HOST: ${WIKI_DOMAIN}   # lu par acme-companion
+    secrets: [db_password]
+    networks: [db, pub]   # aucun port publié : accès uniquement via le proxy
+    command: sh -c 'export DB_PASS="$$(cat /run/secrets/db_password)" && exec node --no-experimental-webstorage backend'
     healthcheck:
-      interval: 30s
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
       timeout: 5s
       retries: 3
       start_period: 60s
     restart: unless-stopped
-    command:
-      - sh
-      - -c
-      - export DB_PASS="$$(cat /run/secrets/db_password)" && exec node --no-experimental-webstorage backend
 
 secrets:
   db_password:
-    file: ./secrets/db_password.txt   # écrit par Terraform/cloud-init
+    file: ./secrets/db_password.txt   # écrit par cloud-init
 
 volumes:
   db-data:
@@ -104,5 +85,5 @@ volumes:
 
 networks:
   db:
-    internal: true  
-  pub:  
+    internal: true   # PostgreSQL sans accès Internet
+  pub:

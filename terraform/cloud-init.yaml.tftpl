@@ -1,9 +1,8 @@
 #cloud-config
-# Rendu par Terraform (templatefile) -> passé en user_data au droplet
+# Rendu par Terraform (templatefile), passé en user_data au droplet
 
-# Utilisateur d'admin non-root, accès par clé uniquement
 users:
-  - name: ${admin_user}
+  - name: ops
     groups: [sudo]
     shell: /bin/bash
     sudo: "ALL=(ALL) NOPASSWD:ALL"
@@ -15,88 +14,33 @@ ssh_pwauth: false
 
 package_update: true
 package_upgrade: true
-packages:
-  - ca-certificates
-  - curl
-  - ufw
+packages: [ca-certificates, curl, ufw]
 
 write_files:
-  # Marqueur pour que write_files ne soit jamais vide
-  - path: /opt/deploy/README
-    permissions: "0644"
-    content: |
-      Fichiers de déploiement générés par Terraform/cloud-init.
-%{~ if run_single }
-  # Script de déploiement du conteneur seul, relançable à la main
-  - path: /opt/deploy/run-container.sh
-    permissions: "0755"
-    content: |
-      #!/usr/bin/env bash
-      set -euo pipefail
-      docker pull ${docker_image}
-      docker rm -f ${container_name} 2>/dev/null || true
-      docker run -d \
-        --name ${container_name} \
-        --restart unless-stopped \
-        -p ${host_port}:${container_port} \
-%{~ for k, v in container_env }
-        -e ${k}='${v}' \
-%{~ endfor }
-        ${docker_image}
-%{~ endif }
-%{~ if compose_content != "" }
-  # Stack docker compose fournie via compose_file_path
   - path: /opt/deploy/docker-compose.yml
     permissions: "0644"
-    content: |
-      ${indent(6, compose_content)}
-%{~ endif }
-%{~ if length(compose_env) > 0 }
-  # Variables d'environnement compose
+    content: ${jsonencode(compose)}
   - path: /opt/deploy/.env
     permissions: "0644"
     content: |
-%{~ for k, v in compose_env }
-      ${k}=${v}
-%{~ endfor }
-%{~ endif }
-%{~ if docker_config != "" }
-  # Identifiants du registry privé (utilisés par docker/compose lancés en root)
+      WIKI_DOMAIN=${wiki_domain}
+      LETSENCRYPT_EMAIL=${letsencrypt_email}
+  - path: /opt/deploy/secrets/db_password.txt
+    permissions: "0644"
+    content: ${jsonencode(db_password)}
   - path: /root/.docker/config.json
     permissions: "0600"
     content: ${jsonencode(docker_config)}
-%{~ endif }
-%{~ for name, value in secrets }
-  # Secret compose "${name}" (dossier parent restreint à root, voir runcmd)
-  - path: /opt/deploy/secrets/${name}.txt
-    permissions: "0644"
-    content: ${jsonencode(value)}
-%{~ endfor }
 
 runcmd:
-  # Installation de Docker Engine + plugin compose (script officiel get.docker.com)
   - curl -fsSL https://get.docker.com | sh
-  - systemctl enable --now docker
-  - usermod -aG docker ${admin_user}
-  # Firewall local en plus du firewall Cloud (défense en profondeur)
+  - usermod -aG docker ops
   - ufw allow 22/tcp
-%{~ for p in open_app_ports }
-  - ufw allow ${p}/tcp
-%{~ endfor }
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
   - ufw --force enable
-%{~ if run_single }
-  # Conteneur seul
-  - /opt/deploy/run-container.sh
-%{~ endif }
-%{~ if length(secrets) > 0 }
-  # Seul root peut parcourir le dossier des secrets
-  # (les fichiers restent lisibles par les utilisateurs des conteneurs, ex: postgres)
-  - chown -R root:root /opt/deploy/secrets
+  # Seul root peut parcourir le dossier (le fichier reste lisible par les conteneurs)
   - chmod 700 /opt/deploy/secrets
-%{~ endif }
-%{~ if compose_content != "" }
-  # Stack compose
   - docker compose -f /opt/deploy/docker-compose.yml up -d
-%{~ endif }
 
 final_message: "cloud-init terminé en $UPTIME secondes"

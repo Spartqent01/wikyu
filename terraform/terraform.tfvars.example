@@ -1,48 +1,17 @@
 # Copie ce fichier en terraform.tfvars et adapte
 
-# ---------- Projet DigitalOcean ----------
-project_name        = "mon-projet"
-project_create      = true          # false si le projet existe déjà dans ton compte
-project_environment = "Development" # Development | Staging | Production
+ssh_allowed_cidrs = ["203.0.113.10/32"] # ton IP : curl ifconfig.me
+# existing_ssh_key_name = "ma-cle"      # si la clé est déjà enregistrée chez DO
 
-# ---------- Droplet ----------
-name   = "docker-vm"
-region = "fra1"
-size   = "s-1vcpu-1gb-amd" # doit être dispo dans la région (voir README)
+wiki_domain       = "wiki.example.com"
+letsencrypt_email = "toi@example.com"
+registry_username = "headwind565"
+# registry_token : export TF_VAR_registry_token="dckr_pat_..."
 
-# ---------- SSH ----------
-ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+# dns_zone = "example.com" # si le domaine est géré chez DigitalOcean
 
-# Si cette clé est déjà enregistrée chez DO, indique son nom (Settings > Security)
-# existing_ssh_key_name = "ma-cle"
-
-# Mets ton IP publique (curl ifconfig.me) pour verrouiller le SSH
-ssh_allowed_cidrs = ["203.0.113.10/32"]
-
-# ---------- Conteneur seul ("" pour le désactiver) ----------
-# Désactivé ici : nginx-proxy du compose occupe déjà les ports 80/443
-docker_image   = ""
-container_name = "app"
-container_port = 80
-host_port      = 80
-
-container_env = {
-  # TZ = "Europe/Paris"
-}
-
-# ---------- Docker Compose (null ou commenté pour le désactiver) ----------
-compose_file_path = "docker-compose.yml"
-extra_open_ports  = [80, 443] # nginx-proxy (80 obligatoire pour Let's Encrypt)
-
-# Écrit dans /opt/deploy/.env, utilisé par le compose
-compose_env = {
-  WIKI_DOMAIN       = "wiki.example.com"
-  LETSENCRYPT_EMAIL = "toi@example.com"
-}
-
-# Secrets générés par Terraform -> /opt/deploy/secrets/<nom>.txt
-generated_secrets = ["db_password"]
-
-# ---------- DNS (optionnel, si ton domaine est géré chez DigitalOcean) ----------
-# dns_zone    = "example.com"
-# dns_records = ["wiki"]   # -> wiki.example.com = IP du droplet
+# Valeurs par défaut modifiables :
+# project_name   = "wikyu"
+# project_create = true   # false si le projet existe déjà
+# region         = "fra1"
+# size           = "s-1vcpu-1gb-amd"
