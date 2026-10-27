@@ -2,6 +2,20 @@
 
 Wiki.js v3 conteneurisé, déployé en HTTPS sur DigitalOcean avec Terraform.
 
+## Sommaire
+
+- [Architecture](#architecture)
+- [1. L'image Docker](#1-limage-docker)
+  - [Construire et publier](#construire-et-publier)
+- [2. La stack Docker Compose](#2-la-stack-docker-compose)
+- [3. Le déploiement Terraform](#3-le-déploiement-terraform)
+  - [Ce qui est créé](#ce-qui-est-créé)
+  - [Ce que fait cloud-init au premier démarrage](#ce-que-fait-cloud-init-au-premier-démarrage)
+  - [Variables principales](#variables-principales-terraformtfvars)
+  - [Déployer](#déployer)
+- [Exploitation](#exploitation)
+- [Dépannage](#dépannage)
+- [Sécurité](#sécurité)
 ## Architecture
 
 ```mermaid
