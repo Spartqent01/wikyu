@@ -2,17 +2,32 @@
 
 Wiki.js v3 conteneurisé, déployé en HTTPS sur DigitalOcean avec Terraform.
 
-```
-   Poste de dev               Docker Hub (privé)              DigitalOcean
-┌──────────────┐   push   ┌────────────────────┐   pull   ┌─────────────────────────────┐
-│ Dockerfile   │ ───────► │ headwind565/       │ ───────► │ Droplet Ubuntu 24.04        │
-│ ./wiki       │          │ dumbsumb:1         │          │  ├─ nginx-proxy     80/443  │
-└──────────────┘          └────────────────────┘          │  ├─ acme-companion  HTTPS   │
-       │                                                  │  ├─ wiki            :3000   │
-       │ terraform apply                                  │  └─ db              Postgres│
-       └─────────────────────────────────────────────────►└─────────────────────────────┘
-```
+## Architecture
 
+```mermaid
+flowchart LR
+    dev["Poste de dev<br/>Dockerfile + sources Wiki.js"]
+    hub[("Docker Hub<br/>image privée")]
+    tf["Terraform"]
+
+    subgraph do["DigitalOcean"]
+        fw{{"Firewall Cloud<br/>22 · 80 · 443"}}
+        subgraph vm["Droplet Ubuntu 24.04"]
+            proxy["nginx-proxy<br/>80/443"]
+            acme["acme-companion<br/>Let's Encrypt"]
+            wiki["Wiki.js<br/>:3000"]
+            db[("PostgreSQL 18")]
+        end
+    end
+
+    user(("Utilisateur"))
+
+    dev -- "docker push" --> hub
+    hub -- "docker pull" --> wiki
+    tf -- "API DigitalOcean" --> do
+    user -- "HTTPS" --> fw --> proxy --> wiki --> db
+    acme -. "certificat" .-> proxy
+```
 ## 1. L'image Docker
 
 Le `Dockerfile` est en deux étapes :
